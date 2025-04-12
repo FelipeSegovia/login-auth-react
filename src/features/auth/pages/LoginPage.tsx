@@ -1,6 +1,6 @@
-import React from 'react'
-import { Link } from 'react-router'
-// import { useMutation, useQueryClient } from '@tanstack/react-query'
+import React, { FormEvent, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { useMutation } from '@tanstack/react-query'
 // import { Loader2 } from 'lucide-react'
 import PlaceholderImg from '@/assets/placeholder.svg'
 import { cn } from '../../../lib/utils.ts'
@@ -8,36 +8,58 @@ import { Card, CardContent } from '../../../components/ui/card.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Label } from '../../../components/ui/label.tsx'
 import { Input } from '../../../components/ui/input.tsx'
+import { getLoginUser } from '../../../services/useLoginUser.ts'
+
+interface FormValues {
+  email: string
+  password: string
+}
 
 export const LoginPage = ({
   className,
   ...props
 }: React.ComponentProps<'div'>) => {
-  // const navigate = useNavigate()
+  const [formValues, setFormValues] = useState<FormValues>({
+    email: '',
+    password: '',
+  })
+
+  const navigate = useNavigate()
   // const queryClient = useQueryClient()
-  /*const { mutate: loginMutation, isPending } = useMutation({
-    mutationFn: loginUser,
+  const { mutate: loginMutation } = useMutation({
+    mutationFn: async ({ email, password }: FormValues) =>
+      await getLoginUser(email, password),
     onSuccess: (data) => {
       console.log('data _=>', data)
-      localStorage.setItem('token', data.token)
+      localStorage.setItem('validateToken', data.accessToken)
 
-      // Esto hace que todas las peticiones de usuario se invaliden, es decir, que se vuelvan a hacer
-      queryClient.invalidateQueries({ queryKey: ['user'] })
-
-      navigate('/chat', { replace: true })
+      navigate('/', { replace: true })
     },
-  })*/
+  })
 
   const onGoogleLogin = () => {
     //* replace, evita que nos vayamos a la pantalla anterior
-    // loginMutation()
+    loginMutation(formValues)
+  }
+
+  const handleChangeInputForm = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handlesubmit = (event: FormEvent) => {
+    event.preventDefault()
+    loginMutation(formValues)
   }
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handlesubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -50,21 +72,25 @@ export const LoginPage = ({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  name="email"
+                  placeholder="example@example.com"
+                  value={formValues.email}
+                  onChange={handleChangeInputForm}
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  required
+                  value={formValues.password}
+                  onChange={handleChangeInputForm}
+                />
               </div>
               <Button type="submit" className="w-full">
                 Login
