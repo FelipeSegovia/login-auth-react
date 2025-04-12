@@ -17,6 +17,7 @@ export const useValidateToken = (token: string) => {
   return useQuery({
     queryKey: ['validateToken'],
     queryFn: async () => await getValidateToken(token),
-    retry: 3,
+    retry: 1,
+    enabled: !!token,
   })
 }

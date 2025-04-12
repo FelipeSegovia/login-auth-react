@@ -6,11 +6,14 @@ import { RegisterPage } from './features/auth/pages/RegisterPage.tsx'
 import HomePage from './features/home/HomePage.tsx'
 import { useValidateToken } from './services/useValidateToken.ts'
 import PrivateRoute from './features/auth/components/PrivateRoute.tsx'
+import { useAuthStore } from './stores/auth/auth.store.ts'
 
 const AppRoutes = () => {
+  const authTokenStore = useAuthStore((state) => state.token)
   const { data: auth, isLoading } = useValidateToken(
     localStorage.getItem('validateToken') || ''
   )
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -30,7 +33,9 @@ const AppRoutes = () => {
         <Route
           path="/"
           element={
-            <PrivateRoute isAuthenticated={!!auth?.validateToken}>
+            <PrivateRoute
+              isAuthenticated={!!auth?.validateToken || authTokenStore !== ''}
+            >
               <HomePage />
             </PrivateRoute>
           }

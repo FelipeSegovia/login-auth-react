@@ -8,6 +8,7 @@ import { Button } from '../../../components/ui/button.tsx'
 import { Label } from '../../../components/ui/label.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import { getLoginUser } from '../../../services/useLoginUser.ts'
+import { useAuthStore } from '../../../stores/auth/auth.store.ts'
 
 interface FormValues {
   email: string
@@ -23,6 +24,7 @@ export const LoginPage = ({
     password: '',
   })
 
+  const setAuthToken = useAuthStore((state) => state.setToken)
   const navigate = useNavigate()
   // const queryClient = useQueryClient()
   const { mutate: loginMutation } = useMutation({
@@ -30,7 +32,7 @@ export const LoginPage = ({
       await getLoginUser(email, password),
     onSuccess: (data) => {
       localStorage.setItem('validateToken', data.accessToken)
-
+      setAuthToken(data.accessToken)
       navigate('/', { replace: true })
     },
   })
