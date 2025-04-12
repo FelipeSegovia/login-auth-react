@@ -1,21 +1,60 @@
-import React from 'react'
-import { Link } from 'react-router'
+import React, { FormEvent, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { Card, CardContent } from '../../../components/ui/card.tsx'
 import { Label } from '../../../components/ui/label.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { cn } from '../../../lib/utils.ts'
 import PlaceholderImg from '../../../assets/placeholder.svg'
+import { useMutation } from '@tanstack/react-query'
+import { useAuthStore } from '../../../stores/auth/auth.store.ts'
+import { getRegisterUser } from '../../../services/useRegisterUser.ts'
+
+interface RegisterFormValues {
+  name: string
+  email: string
+  password: string
+}
 
 export const RegisterPage = ({
   className,
   ...props
 }: React.ComponentProps<'div'>) => {
+  const [formValues, setFormValues] = useState<RegisterFormValues>({
+    name: '',
+    email: '',
+    password: '',
+  })
+  const setAuthToken = useAuthStore((state) => state.setToken)
+  const navigate = useNavigate()
+  const { mutate: loginMutation } = useMutation({
+    mutationFn: async ({ name, email, password }: RegisterFormValues) =>
+      await getRegisterUser(name, email, password),
+    onSuccess: (data) => {
+      localStorage.setItem('validateToken', data.accessToken)
+      setAuthToken(data.accessToken)
+      navigate('/', { replace: true })
+    },
+  })
+
+  const handleChangeInputForm = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    loginMutation(formValues)
+  }
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Create an account</h1>
@@ -25,13 +64,24 @@ export const RegisterPage = ({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" type="text" placeholder="John Doe" required />
+                <Input
+                  id="name"
+                  type="text"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChangeInputForm}
+                  placeholder="John Doe"
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
+                  name="email"
+                  value={formValues.email}
+                  onChange={handleChangeInputForm}
                   placeholder="m@example.com"
                   required
                 />
@@ -39,14 +89,15 @@ export const RegisterPage = ({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  name="password"
+                  value={formValues.password}
+                  onChange={handleChangeInputForm}
+                  type="password"
+                  required
+                />
               </div>
               <Button type="submit" className="w-full">
                 Login
