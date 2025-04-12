@@ -26,7 +26,6 @@ export const LoginPage = ({
 
   const setAuthToken = useAuthStore((state) => state.setToken)
   const navigate = useNavigate()
-  // const queryClient = useQueryClient()
   const { mutate: loginMutation } = useMutation({
     mutationFn: async ({ email, password }: FormValues) =>
       await getLoginUser(email, password),
